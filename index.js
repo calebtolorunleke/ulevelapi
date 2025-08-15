@@ -1,46 +1,40 @@
-require('dotenv').config()
-const express = require('express')
-const { default: mongoose } = require('mongoose')
-const app = express()
-const PORT = 3000
-const conString = process.env.conString
-const router = require('./routes/authrouter')
-const auth = require('./middleware/authentication')
-const blogRouter = require('./routes/blogRouter')
-const notfound = require('./utils/notfound')
-const universalRouter = require('./routes/universalRouter')
+require('dotenv').config();
+const express = require('express');
+const mongoose = require('mongoose');
+const serverless = require('serverless-http');
 
-app.use(express.json())
+const app = express();
 
-app.use('/api/v1/', router)
+// Routers & middleware
+const router = require('./routes/authrouter');
+const auth = require('./middleware/authentication');
+const blogRouter = require('./routes/blogRouter');
+const universalRouter = require('./routes/universalRouter');
+const notfound = require('./utils/notfound');
 
-// app.get('/test', auth, (req, res) => {
-//     res.send('passed authentication')
-// })
+app.use(express.json());
 
-app.use('/api/v1/blog', auth, blogRouter)
-app.use('/api/v1/blogs', universalRouter)
+// Routes
+app.use('/api/v1/', router);
+app.use('/api/v1/blog', auth, blogRouter);
+app.use('/api/v1/blogs', universalRouter);
 
-app.use(notfound)
+// 404 handler
+app.use(notfound);
 
-
-
-const startServer = async (req, res) => {
-    try {
-        await mongoose.connect(conString)
-        console.log('db connected successfully')
-        app.listen(PORT, () => {
-            console.log(`the application is now running fine on port ${PORT}...`);
-
-        })
-    } catch (error) {
-        console.log({ error: error.message })
+// MongoDB connection caching for serverless
+let conn = null;
+const connectDB = async () => {
+    if (conn == null) {
+        conn = await mongoose.connect(process.env.conString);
     }
-}
+    return conn;
+};
 
+// Middleware to ensure DB connection before handling requests
+app.use(async (req, res, next) => {
+    await connectDB();
+    next();
+});
 
-startServer()
-
-
-
-
+module.exports.handler = serverless(app);
