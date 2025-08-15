@@ -37,4 +37,4 @@ app.use(async (req, res, next) => {
     next();
 });
 
-module.exports.handler = serverless(app);
+module.exports = serverless(app); // ✅ Make sure this is the default export
