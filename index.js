@@ -10,7 +10,7 @@ app.use(express.json());
 
 // Routes
 // Make sure filenames match exactly (case-sensitive)
-const authRouter = require('./routes/authRouter');        // <- check exact file name
+const authRouter = require('./routes/authrouter');        // <- check exact file name
 const blogRouter = require('./routes/blogRouter');
 const universalRouter = require('./routes/universalRouter');
 const authMiddleware = require('./middleware/authentication');
