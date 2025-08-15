@@ -1,50 +1,42 @@
-require('dotenv').config();
-const express = require('express');
-const mongoose = require('mongoose');
-const serverless = require('serverless-http');
+require('dotenv').config()
+const express = require('express')
+const { default: mongoose } = require('mongoose')
+const app = express()
+const PORT = 3000
+const conString = process.env.conString
+const router = require('./routes/authrouter')
+const auth = require('./middleware/authentication')
+const blogRouter = require('./routes/blogRouter')
+const notfound = require('./utils/notfound')
+const universalRouter = require('./routes/universalRouter')
 
-const app = express();
+app.use(express.json())
 
-// Middleware
-app.use(express.json());
+app.use('/api/v1/', router)
 
-// Routes
-// Make sure filenames match exactly (case-sensitive)
-const authRouter = require('./routes/authrouter');        // <- check exact file name
-const blogRouter = require('./routes/blogRouter');
-const universalRouter = require('./routes/universalRouter');
-const authMiddleware = require('./middleware/authentication');
-const notFound = require('./utils/notfound');
+// app.get('/test', auth, (req, res) => {
+//     res.send('passed authentication')
+// })
 
-app.use('/api/v1/', authRouter);
-app.use('/api/v1/blog', authMiddleware, blogRouter);
-app.use('/api/v1/blogs', universalRouter);
+app.use('/api/v1/blog', auth, blogRouter)
+app.use('/api/v1/blogs', universalRouter)
 
-// 404 handler
-app.use(notFound);
+app.use(notfound)
 
-// MongoDB connection caching for serverless
-let cachedConn = null;
-const connectDB = async () => {
-    if (cachedConn) return cachedConn;
 
-    cachedConn = await mongoose.connect(process.env.conString, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-    });
-    return cachedConn;
-};
 
-// Middleware to ensure DB is connected before any request
-app.use(async (req, res, next) => {
+const startServer = async (req, res) => {
     try {
-        await connectDB();
-        next();
-    } catch (err) {
-        console.error('DB connection error', err);
-        res.status(500).json({ message: 'Database connection failed' });
-    }
-});
+        await mongoose.connect(conString)
+        console.log('db connected successfully')
+        app.listen(PORT, () => {
+            console.log('the application is now running fine on port ${PORT}...');
 
-// Export handler for Vercel
-module.exports = serverless(app);
+        })
+    } catch (error) {
+        console.log({ error: error.message })
+    }
+}
+
+
+startServer()
