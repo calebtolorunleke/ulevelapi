@@ -5,10 +5,10 @@ const serverless = require('serverless-http');
 
 const app = express();
 const router = require('./routes/authrouter'); // adjust path
-const auth = require('../middleware/authentication');
-const blogRouter = require('../routes/blogRouter');
-const universalRouter = require('../routes/universalRouter');
-const notfound = require('../utils/notfound');
+const auth = require('./middleware/authentication');
+const blogRouter = require('./routes/blogRouter');
+const universalRouter = require('./routes/universalRouter');
+const notfound = require('./utils/notfound');
 
 app.use(express.json());
 
