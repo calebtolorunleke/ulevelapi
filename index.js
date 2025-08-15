@@ -4,40 +4,47 @@ const mongoose = require('mongoose');
 const serverless = require('serverless-http');
 
 const app = express();
-const router = require('./routes/authrouter'); // adjust path
-const auth = require('./middleware/authentication');
-const blogRouter = require('./routes/blogRouter');
-const universalRouter = require('./routes/universalRouter');
-const notfound = require('./utils/notfound');
 
+// Middleware
 app.use(express.json());
 
 // Routes
-app.use('/api/v1/', router);
-app.use('/api/v1/blog', auth, blogRouter);
-app.use('/api/v1/blogs', universalRouter);
-app.use(notfound);
+// Make sure filenames match exactly (case-sensitive)
+const authRouter = require('./routes/authRouter');        // <- check exact file name
+const blogRouter = require('./routes/blogRouter');
+const universalRouter = require('./routes/universalRouter');
+const authMiddleware = require('./middleware/authentication');
+const notFound = require('./utils/notfound');
 
-// MongoDB connection caching
-let conn = null;
+app.use('/api/v1/', authRouter);
+app.use('/api/v1/blog', authMiddleware, blogRouter);
+app.use('/api/v1/blogs', universalRouter);
+
+// 404 handler
+app.use(notFound);
+
+// MongoDB connection caching for serverless
+let cachedConn = null;
 const connectDB = async () => {
-    if (!conn) {
-        conn = await mongoose.connect(process.env.conString, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-        });
-    }
-    return conn;
+    if (cachedConn) return cachedConn;
+
+    cachedConn = await mongoose.connect(process.env.conString, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+    });
+    return cachedConn;
 };
 
-// Middleware to ensure DB connection
+// Middleware to ensure DB is connected before any request
 app.use(async (req, res, next) => {
     try {
         await connectDB();
         next();
     } catch (err) {
-        next(err);
+        console.error('DB connection error', err);
+        res.status(500).json({ message: 'Database connection failed' });
     }
 });
 
+// Export handler for Vercel
 module.exports = serverless(app);
