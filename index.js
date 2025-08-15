@@ -4,13 +4,11 @@ const mongoose = require('mongoose');
 const serverless = require('serverless-http');
 
 const app = express();
-
-// Routers & middleware
-const router = require('./routes/authrouter');
-const auth = require('./middleware/authentication');
-const blogRouter = require('./routes/blogRouter');
-const universalRouter = require('./routes/universalRouter');
-const notfound = require('./utils/notfound');
+const router = require('../routes/authrouter'); // adjust path
+const auth = require('../middleware/authentication');
+const blogRouter = require('../routes/blogRouter');
+const universalRouter = require('../routes/universalRouter');
+const notfound = require('../utils/notfound');
 
 app.use(express.json());
 
@@ -18,23 +16,28 @@ app.use(express.json());
 app.use('/api/v1/', router);
 app.use('/api/v1/blog', auth, blogRouter);
 app.use('/api/v1/blogs', universalRouter);
-
-// 404 handler
 app.use(notfound);
 
-// MongoDB connection caching for serverless
+// MongoDB connection caching
 let conn = null;
 const connectDB = async () => {
-    if (conn == null) {
-        conn = await mongoose.connect(process.env.conString);
+    if (!conn) {
+        conn = await mongoose.connect(process.env.conString, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+        });
     }
     return conn;
 };
 
-// Middleware to ensure DB connection before handling requests
+// Middleware to ensure DB connection
 app.use(async (req, res, next) => {
-    await connectDB();
-    next();
+    try {
+        await connectDB();
+        next();
+    } catch (err) {
+        next(err);
+    }
 });
 
-module.exports = serverless(app); // ✅ Make sure this is the default export
+module.exports = serverless(app);
