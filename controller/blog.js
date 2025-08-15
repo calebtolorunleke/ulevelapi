@@ -64,4 +64,14 @@ const deleteBlog = async (req, res) => {
     }
 }
 
-module.exports = { createBlog, getBlog, getBlogs, updateBlog, deleteBlog }
+//return full blog irrespective of the user
+const universalGetAllBlogs = async (req, res) => {
+    try {
+        const blogs = await Blog.find({})
+        res.status(200).json({ success: true, blogs })
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+module.exports = { createBlog, getBlog, getBlogs, updateBlog, deleteBlog, universalGetAllBlogs }

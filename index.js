@@ -8,6 +8,7 @@ const router = require('./routes/authrouter')
 const auth = require('./middleware/authentication')
 const blogRouter = require('./routes/blogRouter')
 const notfound = require('./utils/notfound')
+const universalRouter = require('./routes/universalRouter')
 
 app.use(express.json())
 
@@ -18,8 +19,10 @@ app.use('/api/v1/', router)
 // })
 
 app.use('/api/v1/blog', auth, blogRouter)
+app.use('/api/v1/blogs', universalRouter)
 
 app.use(notfound)
+
 
 
 const startServer = async (req, res) => {
