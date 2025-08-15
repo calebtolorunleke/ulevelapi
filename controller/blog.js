@@ -74,4 +74,15 @@ const universalGetAllBlogs = async (req, res) => {
     }
 }
 
-module.exports = { createBlog, getBlog, getBlogs, updateBlog, deleteBlog, universalGetAllBlogs }
+// return single blog irrespective of the user
+const universalGetSingleBlog = async (req, res) => {
+    const { blogId } = req.params
+    try {
+        const blog = await Blog.findById(blogId)
+        res.status(200).json({ success: true, blog })
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+module.exports = { createBlog, getBlog, getBlogs, updateBlog, deleteBlog, universalGetAllBlogs, universalGetSingleBlog }
